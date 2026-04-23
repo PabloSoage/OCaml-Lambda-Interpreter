@@ -7,7 +7,8 @@ An interpreter for an extended, statically typed Lambda Calculus, written entire
 The interpreter extends standard lambda calculus with basic data types, complex structures, and a global execution context.
 
 * **Primitives:** `Nat` (Natural numbers with `succ`, `pred`, `iszero`), `Bool` (`true`, `false`, `if-then-else`), and `String` (with `concat`).
-* **Complex Structures:** * `Lists`: Homogeneous sequences (e.g., `[1, 2, 3]`) with `hd`, `tl`, `isempty`, and `::` (cons) operators.
+* **Complex Structures:**
+  * `Lists`: Homogeneous sequences (e.g., `[1, 2, 3]`) with `hd`, `tl`, `isempty`, and `::` (cons) operators.
   * `Tuples`: Heterogeneous sequences with index-based projection (`#`).
   * `Records`: Named field structures (`{name="John"; age=32}`).
   * `Variants`: Tagged unions (`<pos=3> as Int`) with `case-of` pattern matching.
