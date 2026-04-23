@@ -1,0 +1,168 @@
+true
+let x = true in x
+if false then true else false
+0
+succ (succ (succ 0))
+3
+succ (pred 0)
+iszero (pred (succ (succ 0)))
+if iszero 3 then 0 else 1
+iszero true 								(*type error: argument of iszero is not a number*)
+if 1 then true else false 					(*type error: guard of conditional not a boolean*)
+if iszero 3 then 0 else false				(*type error: arms of conditional have different types*)
+let id = Lx.x in id 3 						(*syntax error*)
+let id_bool = L x:Bool. x in id_bool true
+let id_nat = L x:Nat. x in id_nat 5
+let x = 5 in let id_nat = L x:Nat. x in id_nat x
+(*Syntax error en ambas por no ser tipado*)
+let fix = lambda f.(lambda x. f (lambda y. x x y)) (lambda x. f (lambda y. x x y)) in let sumaux = lambda f. (lambda n. (lambda m. if (iszero n) then m else succ (f (pred n) m))) in let sum = fix sumaux in sum 21 34
+let fix = lambda f.(lambda x. f (lambda y. x x y)) (lambda x. f (lambda y. x x y)) in let sumaux = lambda f. (lambda n. (lambda m. if (iszero n) then m else succ (f (pred n) m))) in let sum = fix sumaux in let prodaux = lambda f. (lambda n. (lambda m. if (iszero m) then 0 else sum n (f n (pred m)))) in let prod = fix prodaux in prod 12 5
+
+letrec sum:Nat->Nat->Nat =
+	Ln:Nat.Lm:Nat. if iszero n then m else succ (sum (pred n) m)
+in sum 23 27;;
+
+letrec sum:Nat->Nat->Nat =
+  	Ln:Nat.Lm:Nat. if iszero n then m else succ (sum (pred n) m)
+in letrec mul:Nat->Nat->Nat =
+	Ln:Nat.Lm:Nat. if iszero n then 0 else sum m (mul (pred n) m) in mul 20 40;;
+
+letrec sum:Nat->Nat->Nat =
+	Ln:Nat.Lm:Nat. if iszero n then m else succ (sum (pred n) m)
+in letrec fib:Nat->Nat =
+	Ln:Nat. if iszero n then 0 else if iszero (pred n) then 1 else sum (fib (pred n)) (fib (pred (pred n)))
+in fib 15;; (*Antes podíamos ir hasta fib 16 pero al añadir el condicional de eval, se llena antes*)
+
+
+(*FUNCIONES*)
+(*SUM*)
+letrec sum:Nat->Nat->Nat =
+	Ln:Nat.Lm:Nat. if iszero n then m else succ (sum (pred n) m)
+;;
+
+(*SUB*)
+let sub = letrec sum:Nat->Nat->Nat =
+    Ln:Nat.Lm:Nat. if iszero n then m else succ (sum (pred n) m)
+  in letrec sub:Nat->Nat->Nat =
+    Ln:Nat.Lm:Nat. if iszero m then n else sub (pred n) (pred m)
+;;
+
+(*MUL*)
+let mul = letrec sum:Nat->Nat->Nat =
+  	Ln:Nat.Lm:Nat. if iszero n then m else succ (sum (pred n) m)
+in letrec mul:Nat->Nat->Nat =
+	Ln:Nat.Lm:Nat. if iszero n then 0 else sum m (mul (pred n) m)
+;;
+
+(*FIB*)
+let fib = letrec sum:Nat->Nat->Nat =
+	Ln:Nat.Lm:Nat. if iszero n then m else succ (sum (pred n) m)
+in letrec fib:Nat->Nat =
+	Ln:Nat. if iszero n then 0 else if iszero (pred n) then 1 else sum (fib (pred n)) (fib (pred (pred n)))
+;;
+
+(*Variantes*)
+(*ABS*)
+type Int = <pos:Nat; zero:Bool; neg:Nat>;;
+let p3 = <pos=3> as Int;;
+let n4 = <neg=4> as Int;;
+let abs = Lx:Int.
+        case x of
+        <pos=p> -> <pos=p> as Int
+        | <zero=z> -> <zero=z> as Int
+        | <neg=n> -> <pos=n> as Int
+;;
+
+let add =
+	Lx:Int.Ly:Int.
+    case x of
+      <pos=p1> ->
+        (case y of
+          <pos=p2> -> <pos=(sum p1 p2)> as Int
+        | <zero=z2> -> <pos=p1> as Int
+        | <neg=n2> ->
+            if iszero (sub n2 p1) then <pos=(sub p1 n2)> as Int
+            else (if iszero (sub p1 n2) then <neg=(sub n2 p1)> as Int
+            else <zero=true> as Int))
+      | <zero=z1> ->
+        (case y of
+          <pos=p2> -> <pos=p2> as Int
+        | <zero=z2> -> <zero=true> as Int
+        | <neg=n2> -> <neg=n2> as Int)
+      | <neg=n1> ->
+        (case y of
+          <pos=p2> ->
+            if iszero (sub p2 n1) then <neg=(sub n1 p2)> as Int
+            else (if iszero (sub n1 p2) then <pos=(sub p2 n1)> as Int
+            else <zero=true> as Int)
+        | <zero=z2> -> <neg=n1> as Int
+        | <neg=n2> -> <neg=(sum n1 n2)> as Int)
+;;
+
+(*Contexto global funcional*)
+let x = 3;;
+let id = Lz:Nat.x;; (*(lambda z:Nat. 3) : Nat -> Nat*)
+(*Aunque luego se modifique x, la funcion id seguira devolviendo 3*)
+
+(*String*)
+concat "Hola " (concat "soy " (concat "un " "String"));; (*"Hola soy un String" : String*)
+
+(*Tuplas*)
+(0,1,2,3,4,5) #3;; (*3 : Nat*)
+(0,1,2,3,4,5) #200;; (*Projection index out of bounds*)
+(1,true,"hola",24,Lx:Nat.x);; (*(1,true,"hola",24,(lambda x:Nat. x)) : (Nat,Bool,String,Nat,Nat -> Nat)*)
+let x = (1,(2,3),4);; (*(1,(2,3),4) : (Nat,(Nat,Nat),Nat)*)
+x #1 #1;; (*3 : Nat*)
+
+(*Listas*)
+[1,2,"hola",3];; (*type error: Type mismatch: All elements of the list should be the same type*)
+[1,2,3,4];; (*[1,2,3,4] : [Nat]*)
+isempty [1,2];; (*false : Bool*)
+hd [1,2];; (*1 : Nat*)
+tl [1,2,3];; (*[2,3] : [Nat]*)
+(1::[2,3,4,5]);; (*[1,2,3,4,5] : [Nat]*)
+(1::(hd tl hd tl [[[1],[3]],[[2],[4]]])) (*[1,4] : [Nat]*)
+
+letrec length:Top->Nat =
+    Li:Top. if isempty i then 0 else succ (length (tl i))
+;;
+letrec append:Top->Top->Top =
+  Ll1:Top.Ll2:Top.
+    if isempty l1 then l2 else (hd l1 :: (append (tl l1) l2))
+;;
+(*(T->U)->[T]->[U]*)
+letrec map:Top->Top->Top =
+  Lf:Top->Top.Llst:Top.
+    if isempty lst then []
+    else ((f (hd lst)) :: (map f (tl lst)))
+;;
+
+
+
+(*Registros*)
+type Person = {name:String; age:Nat};;
+let x = Person {name = "John"; age = 32};; (*Person {name="John";age=32} : Person = {name:String;age:Nat}*)
+x.name;; (*"John" : String*)
+
+type Almendra = {name:String; age:Nat; palomita:Person};;
+let p = Person {name="Matengo"; age=21};;
+let almond = Almendra {name="Matengando"; age=999; palomita=p};;
+type Algo = {persona:Person; almendra:Almendra};;
+let something = Algo {persona=p; almendra=almond};;
+something.almendra.palomita.name;; (*"Matengo" : String*)
+
+(*Subtipado*)
+type Person2 = {name:String; age:Nat; palomita:Bool};;
+let f = Lp:Person.p.name;; (*(lambda p:Person. p.name) : (Person = {name:String;age:Nat}) -> String*)
+let p2 = Person2 {name = "John"; age = 32; palomita = false};;
+f p2;; (*"John" : String*)
+
+let f2 = Lp:{}.p;; (*(lambda p:empty_record = {}. p) : (empty_record = {}) -> (empty_record = {})*)
+f2 p2;; (*Person2 {name="John";age=32;palomita=false} : empty_record = {}*)
+
+(*Funcion identidad 'a -> 'a*)
+Lx:Top.x;; (*(lambda x:TyTop. x) : (TyTop) -> (TyTop)*)
+
+(*ALIAS*)
+type N3 = Nat->Nat->Nat;; (*N3 : Nat -> (Nat -> Nat)*)
+(Lx:N3.Ln:Nat.Lm:Nat. x n m) sum 5 6;; (*11 : Nat*)
